@@ -90,6 +90,7 @@ public class CommonMicroServiceTest {
             proxy.toxics().bandwidth("DOWN_DISABLE", ToxicDirection.DOWNSTREAM, 0);
 
             // 3. 创建连接重置代理
+            // todo reset peer 不生效，抓包发现没有发送 rst 包，具体原因需要再看
             proxy = toxiproxyClient.createProxy("reset_peer", "0.0.0.0:" + RESET_PEER_HTTPBIN_PROXY_PORT, HTTPBIN + ":" + HTTPBIN_PORT);
             // 在连接建立后立即重置连接
             // 上游重置 (ToxicDirection.UPSTREAM): 当客户端尝试向服务器发送数据时，连接会被重置，客户端会收到 "Connection reset by peer" 错误
