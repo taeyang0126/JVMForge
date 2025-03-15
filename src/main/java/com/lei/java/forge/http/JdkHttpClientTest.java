@@ -1,7 +1,11 @@
 package com.lei.java.forge.http;
 
+import lombok.extern.log4j.Log4j2;
 import org.junit.Test;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -11,6 +15,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -19,6 +24,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author 伍磊
  */
+@Log4j2
 public class JdkHttpClientTest {
 
     @Test
@@ -85,6 +91,9 @@ public class JdkHttpClientTest {
         long end = System.currentTimeMillis();
         System.out.println("请求完成 -> 耗时: " + (end - start));
 
+        // 等待3s，打印timewait
+        //Thread.sleep(Duration.ofSeconds(30));
+
         jdkHttpClient.close();
         jdkExecutorService.shutdownNow();
         customWireMockServer.close();
@@ -95,7 +104,16 @@ public class JdkHttpClientTest {
                 .scheduleAtFixedRate(() -> {
                     var threadMXBean = ManagementFactory.getThreadMXBean();
                     int activeThreadCount = threadMXBean.getThreadCount();
-                    System.out.println("当前活跃线程数量: " + activeThreadCount);
+                    log.info("当前活跃线程数量: {}", activeThreadCount);
+                    try {
+                        String[] cmd = {"/bin/bash", "-c", "netstat -an | grep tcp | awk '$6 == \"TIME_WAIT\" {count++} END {print count}'"};
+                        Process process = Runtime.getRuntime().exec(cmd);
+                        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()))) {
+                            log.info("timeWait nums: {}", reader.lines().collect(Collectors.joining("\n")));
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }, 0, 100, TimeUnit.MILLISECONDS);
     }
 
