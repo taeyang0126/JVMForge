@@ -1,5 +1,6 @@
 package com.lei.java.forge.http;
 
+import lombok.extern.log4j.Log4j2;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
@@ -20,6 +21,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static com.lei.java.forge.http.CommonMicroServiceTest.HTTPBIN_PORT;
+
 /**
  * <p>
  * 异步的 apache httpClient 测试
@@ -27,7 +30,33 @@ import java.util.concurrent.TimeUnit;
  *
  * @author 伍磊
  */
+@Log4j2
 public class AsyncApacheHttpClientTest {
+
+    /*    @ParameterizedTest(name = "测试 #{index}: 线程数={0}, 请求数={1}, 延迟={2}, 最大连接={3}")
+        @MethodSource("performanceTestParameters")*/
+    @Test
+    public void test_httpbin() {
+
+        // 使用 httpbin 进行测试
+        // 测试 1000 个请求
+        // 每个请求耗时 0.1 s
+        // 线程数量 = 1
+        // 最大连接为 100
+        // 总的请求时间在 1.5s 左右  ===> 1000 * 0.1 / 100 = 1s
+
+        int threadCount = 1;
+        int requestTotal = 1000;
+        double delay = 0.1;
+        int maxConnection = 100;
+
+        // 请求
+        String url = "http://localhost:" +
+                CommonMicroServiceTest.HTTPBIN_CONTAINER.getMappedPort(HTTPBIN_PORT) + "/delay/" + delay;
+
+        benchmarkTest(url, threadCount, maxConnection, requestTotal);
+
+    }
 
     @Test
     public void test_wireMockServer() {
@@ -46,6 +75,12 @@ public class AsyncApacheHttpClientTest {
 
         CustomWireMockServer customWireMockServer = new CustomWireMockServer(fixedDelayMs);
         String url = customWireMockServer.getUrl();
+
+        benchmarkTest(url, threadCount, maxConnection, requestTotal);
+
+    }
+
+    private void benchmarkTest(String url, int threadCount, int maxConnection, int requestTotal) {
         HttpGet request = new HttpGet(url);
 
         printActiveThreadCount();
@@ -64,15 +99,13 @@ public class AsyncApacheHttpClientTest {
 
             countDownLatch.await();
             long end = System.currentTimeMillis();
-            System.out.println("请求完成 -> 耗时: " + (end - start));
+            log.info("请求完成 -> 耗时: {}", (end - start));
 
         } catch (IOException e) {
             throw new RuntimeException(e);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-
-
     }
 
     @NotNull
@@ -138,9 +171,18 @@ public class AsyncApacheHttpClientTest {
                 .scheduleAtFixedRate(() -> {
                     var threadMXBean = ManagementFactory.getThreadMXBean();
                     int activeThreadCount = threadMXBean.getThreadCount();
-                    System.out.println("当前活跃线程数量: " + activeThreadCount);
+                    log.info("当前活跃线程数量: {}", activeThreadCount);
                 }, 0, 100, TimeUnit.MILLISECONDS);
     }
+
+/*    static Stream<Arguments> performanceTestParameters() {
+        return Stream.of(
+                Arguments.of(1, 1000, 0.1, 100),
+                Arguments.of(1, 1000, 0.1, 200),
+                Arguments.of(10, 1000, 0.1, 100),
+                Arguments.of(1, 10000, 0.1, 100)
+        );
+    }*/
 
 
 }

@@ -3,7 +3,8 @@
     <Appenders>
         <!-- 控制台输出 -->
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+            <PatternLayout disableAnsi="false"
+                           pattern="%d{HH:mm:ss.SSS} %highlight{[%-5level]} %style{[%t]}{bright,blue} %style{%logger{36}}{bright,cyan} - %msg%n"/>
         </Console>
         <!-- 文件输出 -->
         <File name="File" fileName="logs/app.log">

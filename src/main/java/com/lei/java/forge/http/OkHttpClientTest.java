@@ -1,5 +1,6 @@
 package com.lei.java.forge.http;
 
+import lombok.extern.log4j.Log4j2;
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Dispatcher;
@@ -15,6 +16,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static com.lei.java.forge.http.CommonMicroServiceTest.HTTPBIN_PORT;
+
 /**
  * <p>
  * OkHttpClientTest
@@ -22,7 +25,33 @@ import java.util.concurrent.TimeUnit;
  *
  * @author 伍磊
  */
+@Log4j2
 public class OkHttpClientTest {
+
+    @Test
+    public void test_httpbin() throws InterruptedException {
+
+        // 使用 WireMockServer 进行测试
+        // 测试 1000 个请求
+        // 每个请求耗时 0.1 s
+
+        // 最大连接为 5 (默认情况)
+        // =====> 总的时间在 25s 左右
+
+        // 最大连接为 100
+        // ======> 总的时间在 1.6s 左右，线程数量相比其他有很多的增加
+
+        int requestTotal = 1000;
+        double delay = 0.1;
+        int maxConnection = 100;
+
+        // 请求
+        String url = "http://localhost:" +
+                CommonMicroServiceTest.HTTPBIN_CONTAINER.getMappedPort(HTTPBIN_PORT) + "/delay/" + delay;
+
+        benchmarkTest(url, requestTotal, maxConnection);
+
+    }
 
     @Test
     public void test_wireMockServer() throws IOException, InterruptedException {
@@ -44,13 +73,19 @@ public class OkHttpClientTest {
         int fixedDelayMs = 100;
         int maxConnection = 100;
 
-        printActiveThreadCount();
-
         CustomWireMockServer customWireMockServer = new CustomWireMockServer(fixedDelayMs);
         String url = customWireMockServer.getUrl();
+
+        benchmarkTest(url, requestTotal, maxConnection);
+
+
+    }
+
+    private void benchmarkTest(String url, int requestTotal, int maxConnection) throws InterruptedException {
         Request request = new Request.Builder()
                 .url(url)
                 .build();
+        printActiveThreadCount();
 
         CountDownLatch countDownLatch = new CountDownLatch(requestTotal);
 
@@ -65,9 +100,7 @@ public class OkHttpClientTest {
         countDownLatch.await();
 
         long end = System.currentTimeMillis();
-        System.out.println("请求完成 -> 耗时: " + (end - start) + "ms");
-
-
+        log.info("请求完成 -> 耗时: {}ms", (end - start));
     }
 
     @NotNull

@@ -1,6 +1,7 @@
 package com.lei.java.forge.http;
 
 import com.google.common.collect.Lists;
+import lombok.extern.log4j.Log4j2;
 import org.junit.Test;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -15,6 +16,8 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static com.lei.java.forge.http.CommonMicroServiceTest.HTTPBIN_PORT;
+
 /**
  * <p>
  * SpringWebfluxHttpClientTest
@@ -22,11 +25,33 @@ import java.util.concurrent.TimeUnit;
  *
  * @author 伍磊
  */
+@Log4j2
 public class SpringWebfluxHttpClientTest {
 
     @Test
-    public void test_wireMockServer() {
+    public void test_httpbin() {
 
+        // 使用 httpbin 进行测试
+        // 测试 1000 个请求
+        // 每个请求耗时 0.1 s
+        // 不设置连接数量
+        // 最大连接为 100
+        // 总的请求时间在 1.8s 左右，活跃线程=34
+
+        int requestTotal = 1000;
+        double delay = 0.1;
+        int maxConnection = 100;
+
+        // 请求
+        String url = "http://localhost:" +
+                CommonMicroServiceTest.HTTPBIN_CONTAINER.getMappedPort(HTTPBIN_PORT) + "/delay/" + delay;
+
+        benchmarkTest(maxConnection, requestTotal, url);
+
+    }
+
+    @Test
+    public void test_wireMockServer() {
 
         // 使用 WireMockServer 进行测试
         // 测试 1000 个请求
@@ -42,6 +67,10 @@ public class SpringWebfluxHttpClientTest {
         CustomWireMockServer customWireMockServer = new CustomWireMockServer(fixedDelayMs);
         String url = customWireMockServer.getUrl();
 
+        benchmarkTest(maxConnection, requestTotal, url);
+    }
+
+    private void benchmarkTest(int maxConnection, int requestTotal, String url) {
         printActiveThreadCount();
 
         WebClient webClient = createWebClient(maxConnection);
@@ -57,7 +86,7 @@ public class SpringWebfluxHttpClientTest {
         long start = System.currentTimeMillis();
         String block = Mono.zip(monos, objects -> "ok").block();
         long end = System.currentTimeMillis();
-        System.out.println("请求完成 -> 耗时: " + (end - start));
+        log.info("请求完成 -> 耗时: {}", (end - start));
     }
 
     private WebClient createWebClient(int maxConnection) {

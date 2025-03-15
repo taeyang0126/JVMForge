@@ -17,6 +17,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.lei.java.forge.http.CommonMicroServiceTest.HTTPBIN_PORT;
+
 /**
  * <p>
  * jdk http client 测试
@@ -26,6 +28,24 @@ import java.util.stream.Collectors;
  */
 @Log4j2
 public class JdkHttpClientTest {
+
+    @Test
+    public void test_httpbin() throws InterruptedException {
+
+        // 每个请求耗时 0.1 s
+        // 线程数量 = 1
+        // 线程数量 = 1
+        // 耗时=0.9s
+
+        int threadCount = 1;
+        int requestTotal = 1000;
+        double delay = 0.1;
+
+        String url = "http://localhost:" +
+                CommonMicroServiceTest.HTTPBIN_CONTAINER.getMappedPort(HTTPBIN_PORT) + "/delay/" + delay;
+
+        benchmarkTest(url, threadCount, requestTotal);
+    }
 
     @Test
     public void test_wireMockServer() throws InterruptedException {
@@ -43,11 +63,17 @@ public class JdkHttpClientTest {
         int requestTotal = 1000;
         int fixedDelayMs = 100;
 
-        printActiveThreadCount();
+
 
         CustomWireMockServer customWireMockServer = new CustomWireMockServer(fixedDelayMs);
         String url = customWireMockServer.getUrl();
 
+        benchmarkTest(url, threadCount, requestTotal);
+
+        customWireMockServer.close();
+    }
+
+    private static void benchmarkTest(String url, int threadCount, int requestTotal) throws InterruptedException {
         ExecutorService jdkExecutorService = Executors.newFixedThreadPool(threadCount);
         HttpClient jdkHttpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
@@ -58,6 +84,8 @@ public class JdkHttpClientTest {
                 .uri(URI.create(url))
                 .GET()
                 .build();
+
+        printActiveThreadCount();
 
         CountDownLatch countDownLatch = new CountDownLatch(requestTotal);
 
@@ -84,22 +112,21 @@ public class JdkHttpClientTest {
             });
         }
 
-        System.out.println("添加时间: " + (System.currentTimeMillis() - start));
+        log.info("添加时间: {}", (System.currentTimeMillis() - start));
 
         countDownLatch.await();
 
         long end = System.currentTimeMillis();
-        System.out.println("请求完成 -> 耗时: " + (end - start));
+        log.info("请求完成 -> 耗时: {}", (end - start));
 
         // 等待3s，打印timewait
-        //Thread.sleep(Duration.ofSeconds(30));
+        // Thread.sleep(Duration.ofSeconds(30));
 
         jdkHttpClient.close();
         jdkExecutorService.shutdownNow();
-        customWireMockServer.close();
     }
 
-    private void printActiveThreadCount() {
+    private static void printActiveThreadCount() {
         Executors.newScheduledThreadPool(1)
                 .scheduleAtFixedRate(() -> {
                     var threadMXBean = ManagementFactory.getThreadMXBean();
