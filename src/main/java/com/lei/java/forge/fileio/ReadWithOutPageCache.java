@@ -1,8 +1,10 @@
 package com.lei.java.forge.fileio;
 
+import org.junit.Test;
 import sun.nio.ch.DirectBuffer;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -16,11 +18,12 @@ import java.util.List;
  *
  * @author 伍磊
  */
+@SuppressWarnings("all")
 public class ReadWithOutPageCache {
 
-    public static void main(String[] args) throws Exception {
-
-        /*
+    @Test
+    public void testReadWithOutPageCache() throws IOException {
+         /*
             VM options
             --add-opens java.base/sun.nio.ch=ALL-UNNAMED
             --add-exports java.base/sun.nio.ch=ALL-UNNAMED
@@ -93,5 +96,6 @@ public class ReadWithOutPageCache {
                     ratio);
         }
     }
+
 
 }

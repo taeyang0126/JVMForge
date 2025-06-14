@@ -26,6 +26,7 @@
         <toxiproxy.version>1.18.3</toxiproxy.version>
         <junit.version>5.9.3</junit.version>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.5.0</maven-surefire-plugin.version>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
         <java.version>24</java.version>
     </properties>
@@ -174,19 +175,51 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <encoding>${maven.compiler.encoding}</encoding>
                     <compilerArgs>
-                        <compilerArg>--enable-preview</compilerArg>
-                        <arg>--add-exports</arg>
-                        <arg>java.base/jdk.internal.ref=ALL-UNNAMED</arg>
-                        <arg>--add-exports</arg>
-                        <arg>java.base/sun.nio.ch=ALL-UNNAMED</arg>
+                        <arg>--enable-preview</arg> <!-- 如果您使用预览功能 -->
+                        <arg>--add-exports=java.base/jdk.internal.misc=ALL-UNNAMED</arg>
+                        <arg>--add-exports=java.base/jdk.internal.vm=ALL-UNNAMED</arg>
+                        <arg>--add-exports=java.base/jdk.internal.ref=ALL-UNNAMED</arg>
+                        <arg>--add-exports=java.base/sun.nio.ch=ALL-UNNAMED</arg>
+                        <arg>--add-opens=java.base/sun.nio.ch=ALL-UNNAMED</arg>
                     </compilerArgs>
+                    <encoding>${maven.compiler.encoding}</encoding>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
-                    <release>${java.version}</release>
                     <meminitial>100m</meminitial>
                     <maxmem>200m</maxmem>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+
+            <!--
+                配置测试运行器 (Surefire)
+                @Test 方法自动添加 VM 参数
+             -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven-surefire-plugin.version}</version>
+                <configuration>
+                    <!--
+                      使用 <argLine> 将 -add-exports 作为 JVM 参数传递给测试进程。
+                      多个参数需要写在同一行，或者使用 @{argLine} 变量追加。
+                    -->
+                    <argLine>
+                        --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED
+                        --add-exports=java.base/jdk.internal.vm=ALL-UNNAMED
+                        --add-exports=java.base/jdk.internal.ref=ALL-UNNAMED
+                        --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
+                        --add-opens=java.base/sun.nio.ch=ALL-UNNAMED
+                        --enable-preview
+                        --enable-native-access=ALL-UNNAMED
+                    </argLine>
                 </configuration>
             </plugin>
         </plugins>

@@ -1,5 +1,7 @@
 package com.lei.java.forge.fileio;
 
+import org.junit.Test;
+
 import java.io.File;
 import java.io.RandomAccessFile;
 import java.lang.foreign.FunctionDescriptor;
@@ -15,16 +17,18 @@ import java.util.List;
 
 /**
  * <p>
- * TODO
+ * WriteWithPageCache
  * </p>
  *
  * @author 伍磊
  */
+@SuppressWarnings("all")
 public class WriteWithPageCache {
 
     static Linker linker = Linker.nativeLinker();
 
-    public static void main(String[] args) throws Exception {
+    @Test
+    public void testWriteWithPageCache() throws Exception {
 
         /*
             VM options

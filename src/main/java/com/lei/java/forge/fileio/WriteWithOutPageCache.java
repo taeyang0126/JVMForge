@@ -1,6 +1,6 @@
 package com.lei.java.forge.fileio;
 
-import sun.misc.Unsafe;
+import org.junit.Test;
 import sun.nio.ch.DirectBuffer;
 
 import java.io.File;
@@ -18,9 +18,11 @@ import java.util.List;
  *
  * @author 伍磊
  */
+@SuppressWarnings("all")
 public class WriteWithOutPageCache {
 
-    public static void main(String[] args) throws Exception {
+    @Test
+    public void testWriteWithOutPageCache() throws Exception {
 
          /*
             VM options
